@@ -23,6 +23,9 @@ class DataCorruptedError(CommsError):
 class OutOfRangeError(CommsError):
     pass
 
+class BrokenConnectionError(CommsError):
+    pass
+
 
 class Packet:
     def __init__(self, data, sender, receiver):
