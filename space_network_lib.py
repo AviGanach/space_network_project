@@ -112,11 +112,10 @@ class SpaceNetwork:
 
     @staticmethod
     def attempt_transmission(packet: Packet):
-        nt = SpaceNetwork(3)
+        nt = SpaceNetwork(5)
         while True:
             try:
                 nt.send(packet)
-                print("Success: The message has been sent")
                 break
             except TemporalInterferenceError:
                 print("TemporalInterferenceError wait 2 minute")
