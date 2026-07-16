@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 import random
+import time
 
 
 class CommsError(Exception):
@@ -36,6 +37,12 @@ class Packet:
     def __repr__(self):
         return f"Packet(data='{self.data}', sender='{self.sender.name}', receiver='{self.receiver.name}')"
 
+class RelayPacket(Packet):
+    def __init__(self, packet_to_relay:Packet, sender, proxy):
+        super().__init__(packet_to_relay,sender,proxy)
+
+    def __repr__(self):
+        return f'RelayPacket(Relaying [{self.data}] to {self.receiver} from {self.sender})'
 
 class SpaceEntity(ABC):
     def __init__(self, name, distance_from_earth):
@@ -49,6 +56,14 @@ class SpaceEntity(ABC):
     def receive_signal(self, packet: Packet):
         pass
 
+class Satellite(SpaceEntity):
+    def __init__(self, name: str, distance_from_earth: float):
+        super().__init__(name, distance_from_earth)
+
+    def receive_signal(self, packet: Packet):
+        if isinstance(packet, RelayPacket):
+            inner_packet = packet.data
+            SpaceNetwork.attempt_transmission(inner_packet)
 
 class SpaceNetwork:
     def __init__(self, level=1, noise=0.7):
@@ -94,3 +109,21 @@ class SpaceNetwork:
             f"[Network] Transmitting from {source_entity.name} to {dest_entity.name}..."
         )
         dest_entity.receive_signal(packet)
+
+    @staticmethod
+    def attempt_transmission(packet: Packet):
+        nt = SpaceNetwork(3)
+        while True:
+            try:
+                nt.send(packet)
+                print("Success: The message has been sent")
+                break
+            except TemporalInterferenceError:
+                print("TemporalInterferenceError wait 2 minute")
+                time.sleep(2)
+            except DataCorruptedError:
+                print("Data retrying ,corrupted...")
+            except LinkTerminatedError:
+                raise BrokenConnectionError("Link lost")
+            except OutOfRangeError:
+                raise BrokenConnectionError("Target out of range")
